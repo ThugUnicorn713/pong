@@ -1,14 +1,20 @@
 use bevy::prelude::*;
 use avian2d::{prelude::*, PhysicsPluginsWithHooks};
-use bevy_ui::prelude::Text;
+//use bevy_ui::prelude::Text;
 use bevy_text::Text2d; 
+use std::net::UdpSocket;
+use::std::{thread, time::Duration};
+
+
+//after adding the UDP game is SUPPPERRRRR laggy, tried moving moving movement into the fixedUpdate didnt work
 
 fn main() {
     App::new()
     .add_plugins(DefaultPlugins)
     .add_plugins(PhysicsPlugins::default())
-    .add_systems(Startup,setup)
+    .add_systems(Startup,(setup, setup_network))
     .add_systems(Update, (move_player_one, move_player_two, player_score_check))
+    .add_systems(FixedUpdate, handle_network_input)
     .insert_resource(MovementSettings{speed: 300.0})
     .insert_resource(Scores {player_one: 0, player_two: 0})
     .run();
@@ -46,6 +52,56 @@ struct MovementSettings{
 struct Scores{
     player_one: u32,
     player_two: u32,
+}
+
+#[derive(Resource)]
+struct NetworkSocket {
+    socket: UdpSocket,
+    target: String,
+}
+
+fn setup_network(mut commands: Commands){
+    let socket = UdpSocket::bind("127.0.0.1:12345").unwrap();
+    socket.set_nonblocking(true).unwrap();
+
+    commands.insert_resource(NetworkSocket {
+        socket,
+        target: "127.0.0.1:12346".to_string(),
+    });
+}
+
+fn handle_network_input(
+    time: Res<Time>,
+    mut query: Query<&mut Transform, With<PlayerTwo>>,
+    socket_res: Option<Res<NetworkSocket>>, 
+){
+    
+    if socket_res.is_none(){
+        return;
+    }
+
+    let socket = &socket_res.unwrap().socket;
+    let mut buf = [0u8; 8];
+
+     if let Ok((amt, _src)) = socket.recv_from(&mut buf) {
+        if let Ok(msg) = std::str::from_utf8(&buf[..amt]) {
+            if let Ok(value) = msg.trim().parse::<i32>() {
+                let mut dir = 0.0;
+                if value == 1 {
+                    dir = 1.0;
+                } else if value == -1 {
+                    dir = -1.0;
+                }
+
+                for mut transform in &mut query {
+                    transform.translation.y += dir * 50.0 * time.delta_secs(); 
+                }
+            }
+        }
+    }
+
+    thread::sleep(Duration::from_millis(50));
+
 }
 
 fn setup (mut commands: Commands,
