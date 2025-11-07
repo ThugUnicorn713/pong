@@ -1,10 +1,19 @@
 use bevy::prelude::*;
 use avian2d::{prelude::*, PhysicsPluginsWithHooks};
 //use bevy_ui::prelude::Text;
-use bevy_text::Text2d; 
+use bevy_text::Text2d;
+use bevy::prelude::Vec2;
 use std::net::UdpSocket;
 use::std::{thread, time::Duration};
+use bincode;
+use serde::{Serialize, Deserialize};
 
+mod shared {
+    
+    pub mod GameState; 
+}
+
+use shared::GameState::*;
 
 //after adding the UDP game is SUPPPERRRRR laggy, tried moving moving movement into the fixedUpdate didnt work
 
@@ -72,35 +81,66 @@ fn setup_network(mut commands: Commands){
 
 fn handle_network_input(
     time: Res<Time>,
-    mut query: Query<&mut Transform, With<PlayerTwo>>,
+    p2_query: Query<&Transform, With<PlayerTwo>>,
+    p1_query: Query<&Transform, With<PlayerOne>>,
+    ball_query: Query<&Transform, With<Ball>>,
     socket_res: Option<Res<NetworkSocket>>, 
 ){
-    
-    if socket_res.is_none(){
+
+     let Some(socket_res) = socket_res else {
         return;
-    }
+    };
+   
+      if let (Ok(p1), Ok(p2), Ok(ball)) = (p1_query.single(), p2_query.single(), ball_query.single()) {
+            let gamestate = GameState {
 
-    let socket = &socket_res.unwrap().socket;
-    let mut buf = [0u8; 8];
+                ball: ball.translation.truncate(),
+                paddle_one: p1.translation.truncate(),
+                paddle_two: p2.translation.truncate(),
+            };
 
-     if let Ok((amt, _src)) = socket.recv_from(&mut buf) {
-        if let Ok(msg) = std::str::from_utf8(&buf[..amt]) {
-            if let Ok(value) = msg.trim().parse::<i32>() {
-                let mut dir = 0.0;
-                if value == 1 {
-                    dir = 1.0;
-                } else if value == -1 {
-                    dir = -1.0;
-                }
-
-                for mut transform in &mut query {
-                    transform.translation.y += dir * 50.0 * time.delta_secs(); 
-                }
+              
+            let data = bincode::serialize(&gamestate).unwrap();
+            if let Err(e) = socket_res.socket.send_to(&data, &socket_res.target) {
+                eprintln!("send failed: {:?}", e);
             }
-        }
-    }
+      }
+        
+        
+      
 
-    thread::sleep(Duration::from_millis(50));
+
+
+
+
+
+
+
+     // if socket_res.is_none(){
+    //     return;
+    // }
+
+    // let socket = &socket_res.unwrap().socket;
+    // let mut buf = [0u8; 8];
+
+    //  if let Ok((amt, _src)) = socket.recv_from(&mut buf) {
+    //     if let Ok(msg) = std::str::from_utf8(&buf[..amt]) {
+    //         if let Ok(value) = msg.trim().parse::<i32>() {
+    //             let mut dir = 0.0;
+    //             if value == 1 {
+    //                 dir = 1.0;
+    //             } else if value == -1 {
+    //                 dir = -1.0;
+    //             }
+
+    //             for mut transform in &mut query {
+    //                 transform.translation.y += dir * 50.0 * time.delta_secs(); 
+    //             }
+    //         }
+    //     }
+    // }
+
+    // thread::sleep(Duration::from_millis(50));
 
 }
 
