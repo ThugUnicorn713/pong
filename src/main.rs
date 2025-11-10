@@ -15,8 +15,6 @@ mod shared {
 
 use shared::GameState::*;
 
-//after adding the UDP game is SUPPPERRRRR laggy, tried moving moving movement into the fixedUpdate didnt work
-
 fn main() {
     App::new()
     .add_plugins(DefaultPlugins)
@@ -31,13 +29,13 @@ fn main() {
 
 const SCREEN_LIMIT_X: f32 = 600.0;
 
-#[derive(Component)]
+#[derive(Component, Resource)]
 struct PlayerOne;
 
-#[derive(Component)]
+#[derive(Component, Resource)]
 struct PlayerTwo;
 
-#[derive(Component)]
+#[derive(Component, Resource)]
 struct Ball;
 
 #[derive(Component)]
@@ -104,7 +102,7 @@ fn handle_network_input(
             if let Err(e) = socket_res.socket.send_to(&data, &socket_res.target) {
                 eprintln!("send failed: {:?}", e);
             }
-      }
+        }
         
         
       
@@ -297,8 +295,6 @@ fn player_score_check(
         Query<&mut Text2d, With<PlayerOneScoreText>>,  //tells bevy they both borrow Text2d but not at the same time
         Query<&mut Text2d, With<PlayerTwoScoreText>>,
     )>,
-   // mut score_query_one: Query<&mut Text2d, With<PlayerOneScoreText>>,  //bevy freaked out about this,
-    //mut score_query_two: Query<&mut Text2d, With<PlayerTwoScoreText>>,   //something to do with query mismatch?
     mut scores: ResMut<Scores>,
 ){
     for (mut transform, mut velocity) in &mut query{

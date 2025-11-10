@@ -1,7 +1,8 @@
 use bevy::math::Vec2;
 use serde::{Serialize, Deserialize};
+use bevy::prelude::Resource;
 
-#[derive(Serialize, Deserialize, Debug, Default)]
+#[derive(Resource, Serialize, Deserialize, Debug, Default)]
 
 pub struct GameState{
     pub ball: Vec2,
