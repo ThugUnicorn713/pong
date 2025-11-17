@@ -8,19 +8,24 @@ use::std::{thread, time::Duration};
 use bincode;
 use serde::{Serialize, Deserialize};
 
-mod shared {
+//  pub mod shared{
     
-    pub mod GameState; 
-}
+//     pub mod GameState;
+//  }
 
-use shared::GameState::*;
+// use shared::GameState::*;
+
+use pong::shared::GameState::*;
+
+mod pong_client;
+use pong_client::{update_from_network, save_game_state};
 
 fn main() {
     App::new()
     .add_plugins(DefaultPlugins)
     .add_plugins(PhysicsPlugins::default())
     .add_systems(Startup,(setup, setup_network))
-    .add_systems(Update, (move_player_one, move_player_two, player_score_check))
+    .add_systems(Update, (move_player_one, move_player_two, player_score_check,))
     .add_systems(FixedUpdate, handle_network_input)
     .insert_resource(MovementSettings{speed: 300.0})
     .insert_resource(Scores {player_one: 0, player_two: 0})
@@ -29,13 +34,13 @@ fn main() {
 
 const SCREEN_LIMIT_X: f32 = 600.0;
 
-#[derive(Component, Resource)]
+#[derive(Component)]
 struct PlayerOne;
 
-#[derive(Component, Resource)]
+#[derive(Component)]
 struct PlayerTwo;
 
-#[derive(Component, Resource)]
+#[derive(Component)]
 struct Ball;
 
 #[derive(Component)]
