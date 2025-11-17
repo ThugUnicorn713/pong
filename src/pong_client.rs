@@ -37,6 +37,7 @@ pub fn update_from_network(mut state: ResMut<GameState>,
 
     if let Ok((amt, _)) = socket.recv_from(&mut buf) {
         if let Ok(current_gs) = bincode::deserialize::<GameState>(&buf[..amt]) {
+
             *state = current_gs;
             println!("[Network] Updated GameState: {:?}", state);
         }
@@ -46,27 +47,32 @@ pub fn update_from_network(mut state: ResMut<GameState>,
 }
 
 
-pub fn save_game_state(mut param_set: ParamSet<( //????? ex 4 WK7 
+pub fn save_game_state(mut param_set: ParamSet<(
     Query <&mut Transform, With<Ball>>,
     Query <&mut Transform, With<PlayerOne>>,
     Query <&mut Transform, With<PlayerTwo>>,
 )>,
 
-    mut state: Res<GameState>,
+    state: Res<GameState>,
 ){
-    if let Ok(mut transform) = param_set.p0().single(){
+    if let Ok(mut transform) = param_set.p0().single_mut(){
 
-        state.ball = transform.translation.truncate();
+        transform.translation.x = state.ball.x;
+        transform.translation.y = state.ball.y;
+
     }
 
-    if let Ok(mut transform) = param_set.p1().single(){
+    if let Ok(mut transform) = param_set.p1().single_mut(){
 
-        state.paddle_one = transform.translation.truncate();
+        transform.translation.x  = state.paddle_one.x;
+        transform.translation.y = state.paddle_one.y;
+
     }
     
-     if let Ok(mut transform) = param_set.p2().single(){
+     if let Ok(mut transform) = param_set.p2().single_mut(){
 
-        state.paddle_two = transform.translation.truncate();
+        transform.translation.x = state.paddle_two.x;
+        transform.translation.y = state.paddle_two.y;
     }
 }
     

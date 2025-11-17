@@ -18,7 +18,7 @@ use serde::{Serialize, Deserialize};
 use pong::shared::GameState::*;
 
 mod pong_client;
-use pong_client::{update_from_network, save_game_state};
+use pong_client::{update_from_network,  save_game_state,};
 
 fn main() {
     App::new()
